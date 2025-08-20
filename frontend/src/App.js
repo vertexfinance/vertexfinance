@@ -1,24 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { plansData, contactInfo } from './mock';
+import { contactInfo } from './mock';
 import PlanModal from './components/PlanModal';
+import PaymentModal from './components/PaymentModal';
+import AdminPanel from './components/AdminPanel';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const App = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsLoaded(true);
+    fetchPlans();
   }, []);
 
-  const openModal = (planKey) => {
-    setSelectedPlan(plansData[planKey]);
+  const fetchPlans = async () => {
+    try {
+      const response = await axios.get(`${API}/plans`);
+      setPlans(response.data);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openModal = (plan) => {
+    setSelectedPlan(plan);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setSelectedPlan(null);
+  };
+
+  const openPaymentModal = (plan) => {
+    setSelectedPlan(plan);
+    setIsPaymentModalOpen(true);
+    setIsModalOpen(false);
+  };
+
+  const closePaymentModal = () => {
+    setIsPaymentModalOpen(false);
     setSelectedPlan(null);
   };
 
@@ -31,6 +64,43 @@ const App = () => {
   const handleInstagramClick = () => {
     window.open(contactInfo.instagram, '_blank');
   };
+
+  const openAdminPanel = () => {
+    setIsAdminPanelOpen(true);
+  };
+
+  const closeAdminPanel = () => {
+    setIsAdminPanelOpen(false);
+  };
+
+  // Key combination to open admin panel (Ctrl+Alt+A)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.altKey && e.key === 'a') {
+        e.preventDefault();
+        openAdminPanel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        background: 'var(--bg-dark)'
+      }}>
+        <div style={{ color: 'var(--accent-gold)', fontSize: '1.5rem' }}>
+          Carregando...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
@@ -84,74 +154,57 @@ const App = () => {
           </div>
 
           <div className="plans-grid">
-            {/* Pessoa Física Plan */}
-            <div className="plan-card">
-              <div className="plan-header">
-                <h3 className="plan-title">Pessoa Física</h3>
-                <div className="plan-price">
-                  <span className="price-amount">R$ 35</span>
-                  <span className="price-period">/mês</span>
+            {plans.map((plan) => (
+              <div key={plan.id} className="plan-card">
+                <div className="plan-header">
+                  <h3 className="plan-title">{plan.title}</h3>
+                  <div className="plan-price">
+                    <span className="price-amount">R$ {(plan.price / 100).toFixed(0)}</span>
+                    <span className="price-period">{plan.period}</span>
+                  </div>
+                  {plan.premium_price && (
+                    <div className="plan-price" style={{ fontSize: '0.9em', opacity: 0.8, marginTop: '0.5rem' }}>
+                      <span className="price-amount" style={{ fontSize: '1.5rem' }}>
+                        R$ {(plan.premium_price / 100).toFixed(0)}
+                      </span>
+                      <span className="price-period">{plan.premium_text}</span>
+                    </div>
+                  )}
+                  {plan.subtitle && (
+                    <p className="body-small" style={{ margin: '0.5rem 0' }}>
+                      {plan.subtitle}
+                    </p>
+                  )}
+                  <p className="plan-commission">
+                    {plan.commission}
+                  </p>
                 </div>
-                <div className="plan-price" style={{ fontSize: '0.9em', opacity: 0.8, marginTop: '0.5rem' }}>
-                  <span className="price-amount" style={{ fontSize: '1.5rem' }}>R$ 45</span>
-                  <span className="price-period">com acompanhamento Premium</span>
+
+                <ul className="plan-features">
+                  {plan.features.slice(0, 4).map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
+                  <li style={{ fontStyle: 'italic', opacity: 0.8 }}>E muito mais...</li>
+                </ul>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => openModal(plan)}
+                    style={{ flex: 1 }}
+                  >
+                    Saiba Mais
+                  </button>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => openPaymentModal(plan)}
+                    style={{ flex: 1 }}
+                  >
+                    Contratar
+                  </button>
                 </div>
-                <p className="plan-commission">
-                  {plansData.pessoaFisica.commission}
-                </p>
               </div>
-
-              <ul className="plan-features">
-                {plansData.pessoaFisica.features.slice(0, 4).map((feature, index) => (
-                  <li key={index}>{feature}</li>
-                ))}
-                <li style={{ fontStyle: 'italic', opacity: 0.8 }}>E muito mais...</li>
-              </ul>
-
-              <div style={{ textAlign: 'center' }}>
-                <button 
-                  className="btn-secondary" 
-                  onClick={() => openModal('pessoaFisica')}
-                  style={{ width: '100%' }}
-                >
-                  Saiba Mais
-                </button>
-              </div>
-            </div>
-
-            {/* Empresa Plan */}
-            <div className="plan-card">
-              <div className="plan-header">
-                <h3 className="plan-title">Empresa</h3>
-                <div className="plan-price">
-                  <span className="price-amount">R$ 100</span>
-                  <span className="price-period">/mês</span>
-                </div>
-                <p className="body-small" style={{ margin: '0.5rem 0' }}>
-                  {plansData.empresa.subtitle}
-                </p>
-                <p className="plan-commission">
-                  {plansData.empresa.commission}
-                </p>
-              </div>
-
-              <ul className="plan-features">
-                {plansData.empresa.features.slice(0, 4).map((feature, index) => (
-                  <li key={index}>{feature}</li>
-                ))}
-                <li style={{ fontStyle: 'italic', opacity: 0.8 }}>E muito mais...</li>
-              </ul>
-
-              <div style={{ textAlign: 'center' }}>
-                <button 
-                  className="btn-secondary" 
-                  onClick={() => openModal('empresa')}
-                  style={{ width: '100%' }}
-                >
-                  Saiba Mais
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -181,11 +234,29 @@ const App = () => {
         </div>
       </footer>
 
-      {/* Plan Modal */}
+      {/* Plan Info Modal */}
       <PlanModal 
         plan={selectedPlan}
         isOpen={isModalOpen}
         onClose={closeModal}
+        onContract={() => openPaymentModal(selectedPlan)}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal 
+        plan={selectedPlan}
+        isOpen={isPaymentModalOpen}
+        onClose={closePaymentModal}
+        onSuccess={(order) => {
+          console.log('Payment successful:', order);
+          closePaymentModal();
+        }}
+      />
+
+      {/* Admin Panel */}
+      <AdminPanel 
+        isOpen={isAdminPanelOpen}
+        onClose={closeAdminPanel}
       />
     </div>
   );

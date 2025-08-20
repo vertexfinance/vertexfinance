@@ -1,18 +1,17 @@
 import React from 'react';
 import { contactInfo } from '../mock';
 
-const PlanModal = ({ plan, isOpen, onClose }) => {
+const PlanModal = ({ plan, isOpen, onClose, onContract }) => {
   if (!isOpen || !plan) return null;
 
   const handleWhatsAppContact = () => {
-    const message = encodeURIComponent(plan.whatsappMessage);
+    const message = encodeURIComponent(plan.whatsapp_message);
     const whatsappUrl = `https://wa.me/${contactInfo.whatsapp.replace(/\s+/g, '')}?text=${message}`;
     window.open(whatsappUrl, '_blank');
   };
 
   const handleContractPlan = () => {
-    // Mock functionality for contracting plan
-    alert('Funcionalidade de contratação em desenvolvimento. Por favor, use o botão Contato para mais informações.');
+    onContract();
   };
 
   return (
@@ -25,15 +24,15 @@ const PlanModal = ({ plan, isOpen, onClose }) => {
         <div className="plan-header">
           <h2 className="plan-title">{plan.title}</h2>
           <div className="plan-price">
-            <span className="price-amount">{plan.price}</span>
+            <span className="price-amount">R$ {(plan.price / 100).toFixed(0)}</span>
             <span className="price-period">{plan.period}</span>
           </div>
-          {plan.premiumPrice && (
+          {plan.premium_price && (
             <div className="plan-price" style={{ fontSize: '0.9em', opacity: 0.8 }}>
               <span className="price-amount" style={{ fontSize: '1.5rem' }}>
-                {plan.premiumPrice}
+                R$ {(plan.premium_price / 100).toFixed(0)}
               </span>
-              <span className="price-period">{plan.premiumText}</span>
+              <span className="price-period">{plan.premium_text}</span>
             </div>
           )}
           {plan.subtitle && (
@@ -55,13 +54,13 @@ const PlanModal = ({ plan, isOpen, onClose }) => {
           </ul>
         </div>
 
-        {plan.premiumFeatures && (
+        {plan.premium_features && (
           <div style={{ marginTop: '2rem' }}>
             <h3 className="heading-2" style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>
               Premium inclui também:
             </h3>
             <ul className="plan-features">
-              {plan.premiumFeatures.map((feature, index) => (
+              {plan.premium_features.map((feature, index) => (
                 <li key={index}>{feature}</li>
               ))}
             </ul>
