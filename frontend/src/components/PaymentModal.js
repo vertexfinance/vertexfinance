@@ -19,7 +19,7 @@ const PaymentModal = ({ plan, isOpen, onClose, onSuccess }) => {
     address: ''
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && step === 2) {
       fetchPixInfo();
     }
